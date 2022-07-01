@@ -1,3 +1,4 @@
+from rx import return_value
 import upnpy
 
 
@@ -28,7 +29,7 @@ def main(device):
     # Finally, get the external IP address
     # Execute the action by its name
     # Returns a dictionary: {'NewExternalIPAddress': 'xxx.xxx.xxx.xxx'}
-    print(service.GetExternalIPAddress())
+    print(get_external_ip(service))
 
     #print(service.AddPortMapping.get_input_arguments())
     #print(service.DeletePortMapping.get_input_arguments())
@@ -67,4 +68,12 @@ def add_port_mapping( service,external_port, protocol, internal_port, client_ip,
     except Exception:
         print("Error while adding the portmapping.")
         
+def get_external_ip(service):
+    try:
+
+        ip_string = service.GetExternalIPAddress()['NewExternalIPAddress']
+        return ip_string
+    except Exception as err:
+        print(err)
+
 main(select_gateway())
