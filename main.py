@@ -9,7 +9,7 @@ def select_gateway():
         return device
 
     except Exception as err:
-        print("Erro while discovering the gateway.")
+        print("Error while discovering the gateway.")
         print(err)
 
 
@@ -18,6 +18,7 @@ def main():
         device = select_gateway()
         service_name = list(device.services.keys())[0]
         service = device[service_name]
+
 
         print(service.get_actions())
 
@@ -28,40 +29,39 @@ def main():
 
         #print(service.AddPortMapping.get_input_arguments())
         #print(service.DeletePortMapping.get_input_arguments())
-        #print("here ", service.GetSpecificPortMappingEntry(NewRemoteHost='', NewExternalPort=21181, NewProtocol='TCP'))
         
-        """service.AddPortMapping(
-            NewRemoteHost='',
-            NewExternalPort=21180,
-            NewProtocol='TCP',
-            NewInternalPort=22000,
-            NewInternalClient='192.168.1.149',
-            NewEnabled=1,
-            NewPortMappingDescription='Test port mapping entry from UPnPy.',
-            NewLeaseDuration=0
-        )"""
-        #print("whatch this: ", service.GetGenericPortMappingEntry(NewPortMappingIndex=0))
-        
-        """service.DeletePortMapping(
-            NewRemoteHost='',
-            NewExternalPort=21180,
-            NewProtocol='TCP')
-        """ 
     except Exception as err:
         print(err)
 
+
+def delete_port_mapping(service, port, protocol):
+    try:
+        if check_port_mapping(service, port, protocol) == 1:
+            service.DeletePortMapping(
+                NewRemoteHost='',
+                NewExternalPort=port,
+                NewProtocol=protocol)
+
+    except Exception as err:
+        print("Error while deleting a portmapping.")
+        print(err) 
+
+
 def add_port_mapping( service,external_port, protocol, internal_port, client_ip, description='', lease_duration=0):
     try:
-        service.AddPortMapping(
-        NewRemoteHost='',
-        NewExternalPort=external_port,
-        NewProtocol=protocol,
-        NewInternalPort=internal_port,
-        NewInternalClient=client_ip,
-        NewEnabled=1,
-        NewPortMappingDescription=description,
-        NewLeaseDuration=lease_duration
-        )
+        if check_port_mapping(service, external_port, protocol) == 0:
+            service.AddPortMapping(
+            NewRemoteHost='',
+            NewExternalPort=external_port,
+            NewProtocol=protocol,
+            NewInternalPort=internal_port,
+            NewInternalClient=client_ip,
+            NewEnabled=1,
+            NewPortMappingDescription=description,
+            NewLeaseDuration=lease_duration
+            )
+        else:
+            print("This rule already exists.")
 
     except Exception as err:
         print("Error while adding the portmapping.")
@@ -73,8 +73,19 @@ def get_external_ip(service):
 
         ip_string = service.GetExternalIPAddress()['NewExternalIPAddress']
         return ip_string
+
     except Exception as err:
         print(err)
+
+
+def check_port_mapping(service, port, protocol):
+    try:
+        portmapping = service.GetSpecificPortMappingEntry(NewRemoteHost='', NewExternalPort=port, NewProtocol=protocol)
+        return 1
+
+    except Exception as err:
+        print(err)
+        return 0
 
 
 if __name__ == "__main__":
