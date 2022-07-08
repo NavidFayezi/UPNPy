@@ -1,4 +1,17 @@
 import upnpy
+import netifaces
+
+
+
+def get_local_ip():
+    if_list = netifaces.interfaces()
+    # In other machines you have to choose the right interface from "if_list".
+    # On my machine that is eth0.
+    ipv4_addresses = netifaces.ifaddresses('eth0')[netifaces.AF_INET]
+    local_ipv4 = ipv4_addresses[0]['addr']
+    # Attention! There might be more than one ipv4 address for one interface.
+    # Make sure to choose the right one from "ipv4_addresses".
+    return local_ipv4
 
 
 def select_gateway():
@@ -15,6 +28,7 @@ def select_gateway():
 
 def main():
     try:
+        print(get_local_ip())
         device = select_gateway()
         service_name = list(device.services.keys())[0]
         service = device[service_name]
@@ -47,7 +61,8 @@ def delete_port_mapping(service, port, protocol):
         print(err) 
 
 
-def add_port_mapping( service,external_port, protocol, internal_port, client_ip, description='', lease_duration=0):
+def add_port_mapping( service,external_port, protocol, internal_port, client_ip, description='', lease_duration=604000): 
+    # Lease duration is in seconds. 0 means indefinitely, which sets it to the maximum.
     try:
         if check_port_mapping(service, external_port, protocol) == 0:
             service.AddPortMapping(
