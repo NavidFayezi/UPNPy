@@ -1,8 +1,10 @@
 import upnpy
 import netifaces
+import sys
 
 
-
+# Note: It is not possible to add a portmapping for an "Internal Client" for other IPs.
+# You may only add portmappings for your own IP address. 
 def get_local_ipv4():
     if_list = netifaces.interfaces()
     # In other machines you have to choose the right interface from "if_list".
@@ -17,7 +19,7 @@ def get_local_ipv4():
 def select_gateway():
     try:
         upnp = upnpy.UPnP()
-        #devices = upnp.discover()
+        devices = upnp.discover()
         device = upnp.get_igd()
         return device
 
@@ -98,15 +100,18 @@ def main():
         service_name = list(device.services.keys())[0]
         service = device[service_name]
 
-        print(service.get_actions())
+        external_port = int(sys.argv[1])
+        internal_port = int(sys.argv[2])
+        protocol = sys.argv[3]
+
+        #print(service.get_actions())
 
         # Finally, get the external IP address
         # Execute the action by its name
         # Returns a dictionary: {'NewExternalIPAddress': 'xxx.xxx.xxx.xxx'}
-        print(get_external_ip(service))
-        check_port_mapping(service, 3333, 'TCP')
-        #print(service.AddPortMapping.get_input_arguments())
-        #print(service.DeletePortMapping.get_input_arguments())
+        #print(get_external_ip(service))
+        #add_port_mapping(service, 33333, 'TCP', 22222, local_ipv4)
+        add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
         
     except Exception as err:
         print(err)
