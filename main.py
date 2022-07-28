@@ -3,6 +3,10 @@ import netifaces
 import sys
 
 
+HELP_MSG = "Use the script as follows:\n\
+python main.py -a EXTERNAL_PORT INTERNAL_PORT PROTOCOL      *This adds a portmapping.\n\
+python main.py -d EXTERNAL_PORT PROTOCOL                    *This deletes a portmapping."
+
 # Note: It is not possible to add a portmapping for an "Internal Client" for other IPs.
 # You may only add portmappings for your own IP address. 
 def get_local_ipv4():
@@ -25,7 +29,7 @@ def select_gateway():
 
     except Exception as err:
         print("Error while discovering the gateway.")
-        print(err)
+        raise(err)
 
 
 
@@ -100,10 +104,19 @@ def main():
         service_name = list(device.services.keys())[0]
         service = device[service_name]
 
-        external_port = int(sys.argv[1])
-        internal_port = int(sys.argv[2])
-        protocol = sys.argv[3]
+        operation = sys.argv[1]
+        if operation == "-a":
+            external_port = int(sys.argv[2])
+            internal_port = int(sys.argv[3])
+            protocol = sys.argv[4]
+            add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
 
+        elif operation == "-d":
+            external_port = int(sys.argv[2])
+            protocol = sys.argv[3]
+            delete_port_mapping(service, external_port, protocol)
+
+        
         #print(service.get_actions())
 
         # Finally, get the external IP address
@@ -111,10 +124,12 @@ def main():
         # Returns a dictionary: {'NewExternalIPAddress': 'xxx.xxx.xxx.xxx'}
         #print(get_external_ip(service))
         #add_port_mapping(service, 33333, 'TCP', 22222, local_ipv4)
-        add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
+        #add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
+        #delete_port_mapping(service, external_port, protocol)
         
     except Exception as err:
         print(err)
+        print(HELP_MSG)
 
 
 if __name__ == "__main__":
