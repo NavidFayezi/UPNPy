@@ -1,3 +1,4 @@
+from sympy import arg
 import upnpy
 import netifaces
 import sys
@@ -10,14 +11,18 @@ python main.py -d EXTERNAL_PORT PROTOCOL                    *This deletes a port
 # Note: It is not possible to add a portmapping for an "Internal Client" for other IPs.
 # You may only add portmappings for your own IP address. 
 def get_local_ipv4():
-    if_list = netifaces.interfaces()
-    # In other machines you have to choose the right interface from "if_list".
-    # On my machine that is eth0.
-    ipv4_addresses = netifaces.ifaddresses('eth0')[netifaces.AF_INET]
-    local_ipv4 = ipv4_addresses[0]['addr']
-    # Attention! There might be more than one ipv4 address for one interface.
-    # Make sure to choose the right one from "ipv4_addresses".
-    return local_ipv4
+    try:
+        if_list = netifaces.interfaces()
+        # In other machines you have to choose the right interface from "if_list".
+        # On my machine that is eth0.
+        ipv4_addresses = netifaces.ifaddresses('eth0')[netifaces.AF_INET]
+        local_ipv4 = ipv4_addresses[0]['addr']
+        # Attention! There might be more than one ipv4 address for one interface.
+        # Make sure to choose the right one from "ipv4_addresses".
+        return local_ipv4
+    except Exception as err:
+        print("Error while obtaining the local ipv4 address")
+        raise err
 
 
 def select_gateway():
@@ -29,7 +34,7 @@ def select_gateway():
 
     except Exception as err:
         print("Error while discovering the gateway.")
-        raise(err)
+        raise err
 
 
 
@@ -43,7 +48,7 @@ def delete_port_mapping(service, port, protocol):
 
     except Exception as err:
         print("Error while deleting a portmapping.")
-        print(err) 
+        raise err 
 
 
 def add_port_mapping( service,external_port, protocol, internal_port, client_ip, description='', lease_duration=604000): 
@@ -71,17 +76,16 @@ def add_port_mapping( service,external_port, protocol, internal_port, client_ip,
 
     except Exception as err:
         print("Error while adding the portmapping.")
-        print(err)
+        raise err
         
 
 def get_external_ip(service):
     try:
         ip_string = service.GetExternalIPAddress()['NewExternalIPAddress']
         return ip_string
-
     except Exception as err:
-        print(err)
-
+        print("Error while obtaining the external ip address")
+        raise err
 
 def check_port_mapping(service, port, protocol):
     try:
@@ -104,17 +108,26 @@ def main():
         service_name = list(device.services.keys())[0]
         service = device[service_name]
 
-        operation = sys.argv[1]
+        arguments = sys.argv[:]
+        operation = arguments[1]
         if operation == "-a":
-            external_port = int(sys.argv[2])
-            internal_port = int(sys.argv[3])
-            protocol = sys.argv[4]
+            external_port = int(arguments[2])
+            internal_port = int(arguments[3])
+            protocol = arguments[4]
             add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
 
         elif operation == "-d":
-            external_port = int(sys.argv[2])
-            protocol = sys.argv[3]
+            external_port = int(arguments[2])
+            protocol = arguments[3]
             delete_port_mapping(service, external_port, protocol)
+
+        elif operation == "-q":
+            if arguments[2] == "extip":
+                print("Your external IP is: ", get_external_ip(service))
+            else:
+                raise RuntimeError
+        else: 
+            raise RuntimeError
 
         
         #print(service.get_actions())
@@ -122,7 +135,7 @@ def main():
         # Finally, get the external IP address
         # Execute the action by its name
         # Returns a dictionary: {'NewExternalIPAddress': 'xxx.xxx.xxx.xxx'}
-        #print(get_external_ip(service))
+        
         #add_port_mapping(service, 33333, 'TCP', 22222, local_ipv4)
         #add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
         #delete_port_mapping(service, external_port, protocol)
