@@ -1,4 +1,3 @@
-from sympy import arg
 import upnpy
 import netifaces
 import sys
@@ -20,6 +19,7 @@ def get_local_ipv4():
         # Attention! There might be more than one ipv4 address for one interface.
         # Make sure to choose the right one from "ipv4_addresses".
         return local_ipv4
+
     except Exception as err:
         print("Error while obtaining the local ipv4 address")
         raise err
@@ -115,11 +115,13 @@ def main():
             internal_port = int(arguments[3])
             protocol = arguments[4]
             add_port_mapping(service, external_port, protocol, internal_port, local_ipv4)
+            print("Portmapping added.")
 
         elif operation == "-d":
             external_port = int(arguments[2])
             protocol = arguments[3]
             delete_port_mapping(service, external_port, protocol)
+            print("Portmapping deleted.")
 
         elif operation == "-q":
             if arguments[2] == "extip":
